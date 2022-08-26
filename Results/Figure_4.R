@@ -1,0 +1,46 @@
+# Figure 4. Pearson (R) correlation coefficients of (a) temperature and
+# (b) precipitation  from ERA5, JRA55, NCEP2, and CRU with observations
+# in the EAM region for annual and seasonal means during the forty years of
+# 1981-2020 for North Korea, South Korea, and Japan and the thirty years of
+# 1981-2010 for China. Green circles around points represent p-value
+# less than 0.01. Histograms at the upper-right corner of map show that
+# the numbers of stations belong to each range of correlation coefficients.
+
+source("C:\\Users\\Minseok\\projects\\Comparison\\Functions.R", encoding = 'UTF-8')
+eam <- read.csv("H:\\Toolkit\\Mirror\\Comparison\\EAM\\v3\\eam_pearson.csv")
+
+eam[,'method'] <- factor(eam[,'method'], levels = c("pearson"))
+eam[,'data'] <- factor(eam[,'data'], levels = c("ERA5", "JRA55", "NCEP2", "CRU"))
+eam[,'significance'] <- factor(eam[,'significance'], levels = c(1, 0))
+
+eam <- st_as_sf(eam, coords = c('lon', 'lat'))
+eam <- st_make_valid(eam)
+eam <- st_set_crs(eam, "+proj=longlat +datum=WGS84 +no_defs")
+
+st_data <- list()
+stn <- list(eam$var, eam$season)
+st_data <- split(eam, stn)
+
+for(i in 1:length(names(st_data))){
+  assign(names(st_data)[i], anl_map(st_data[[i]], subplot = TRUE))
+}
+
+t <- avg_temp.ANN/avg_temp.DJF/avg_temp.MAM/avg_temp.JJA/avg_temp.SON +
+  plot_layout(guides = 'collect') +
+  plot_annotation(title = '(a) Temperature', 
+                  theme = theme(plot.title = element_text(size = 20, face = 'bold'),
+                                legend.position = 'right'))
+
+p <- pre.ANN/pre.DJF/pre.MAM/pre.JJA/pre.SON + 
+  plot_layout(guides = 'collect') + 
+  plot_annotation(title = '(b) Precipitation', 
+                  theme = theme(plot.title = element_text(size = 20, face = 'bold'),
+                                legend.position = 'right'))
+
+t
+p
+
+ggsave("G:/내 드라이브/ICP Lab/Comparison/Figures/figure_4a.png", device = 'png',
+       plot = t, width = 14, height = 21, dpi = "retina", units = 'in')
+ggsave("G:/내 드라이브/ICP Lab/Comparison/Figures/figure_4b.png", device = 'png',
+       plot = p, width = 14, height = 21, dpi = "retina", units = 'in')

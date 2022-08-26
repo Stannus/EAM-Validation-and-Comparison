@@ -1,0 +1,28 @@
+ID,station_name,province,station_name(eg),province and Special city,lat,lon,ele(m),start_year
+3,선봉,함경북도,Sonbong,Hamgyeongbuk-do,42.3167,130.4,3,1973
+5,삼지연,양강도,Samjiyon,Ryanggang-do,41.8167,128.3167,1386,1981
+8,청진,함경북도,Chongjin,Hamgyeongbuk-do,41.7833,129.8167,43,1973
+14,중강,자강도,Chunggang,Jagang-do,41.7833,126.8833,332,1973
+16,혜산,양강도,Hyesan,Ryanggang-do,41.4,128.1667,714,1973
+20,강계,자강도,Kanggye,Jagang-do,40.9667,126.6,306,1973
+22,풍산,양강도,Pungsan,Ryanggang-do,40.8167,128.15,1206,1981
+25,김책,함경북도,Kimchaek,Hamgyeongbuk-do,40.6667,129.2,23,1973
+28,수풍,평안북도,Supung,Pyeonganbuk-do,40.45,124.9333,83,1981
+31,장진,함경남도,Changjin,Hamgyeongnam-do,40.3667,127.25,1081,1981
+35,신의주,평안북도,Sinuiju,Pyeonganbuk-do,40.1,124.3833,7,1973
+37,구성,평안북도,Kusong,Pyeonganbuk-do,39.9833,125.25,99,1981
+39,희천,자강도,Huichon,Jagang-do,40.1667,126.25,155,1981
+41,함흥,함경남도,Hamhung,Hamgyeongnam-do,39.9333,127.55,38,1973
+46,신포,함경남도,Sinpo,Hamgyeongnam-do,40.0333,128.1833,19,1981
+50,안주,평안남도,Anju,Pyeongannam-do,39.6167,125.65,27,1981
+52,양덕,평안남도,Yangdok,Pyeongannam-do,39.1667,126.8333,279,1981
+55,원산,강원도,Wonsan,Kangwon-do,39.1833,127.4333,36,1973
+58,평양,평양시,Pyongyang,Pyongyang-si,39.0333,125.7833,38,1973
+60,남포,남포시,Nampo,Nampo-Si,38.7167,125.3667,47,1981
+61,장전,강원도,Changjon ,Kangwon-do,38.7333,128.1833,35,1981
+65,사리원,황해북도,Sariwon,Hwanghaebuk-do,38.5167,125.7667,52,1973
+67,신계,황해북도,Singye,Hwanghaebuk-do,38.5,126.5333,100,1981
+68,용연,황해남도,Ryongyon,Hwanghaenam-do,38.2,124.8833,5,1981
+69,해주,황해남도,Haeju,Hwanghaenam-do,38.0333,125.7,81,1973
+70,개성,황해북도,Kaesong,Hwanghaebuk-do,37.9667,126.5667,70,1973
+75,평강,강원도,Pyonggang,Kangwon-do,38.4,127.3,371,1981

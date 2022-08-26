@@ -1,0 +1,436 @@
+---
+title: "Figures_data"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Elevations Of Stations
+
+results:
+
+```{r elevations}
+
+```
+
+## Mean Climatologies
+
+```{r climatologies}
+
+```
+
+## Temporal Analyses - Pearson, Spearman, Kendall, RMSE, Bias
+
+```{r temporal}
+
+#function
+all_analysis <- function(meta){
+  for(k in 1:4){
+    
+    data <- levels(factor(meta$station)) #오름차순 정렬
+    l <- length(data)
+    
+    # 기온 
+    re <- t.result[[k]] 
+    re.list <- list()
+    
+    for(i in 1:l){
+      re.list[[i]] <- re[,c(l+2,l+3,i)]
+      re.list[[i]] <- transform(re.list[[i]], "ID" = names(re)[i])
+      re.list[[i]] <- re.list[[i]][,c(4,1,2,3)]
+      names(re.list[[i]]) <- c("ID", "year", "month", "avgtemp")
+    }
+    # 강수
+    re <- p.result[[k]] 
+    re.list2 <- list()
+    
+    for(i in 1:l){
+      re.list2[[i]] <- re[,c(l+2,l+3,i)]
+      re.list2[[i]] <- transform(re.list2[[i]], "ID" = names(re)[i])
+      re.list2[[i]] <- re.list2[[i]][,c(4,1,2,3)]
+      names(re.list2[[i]]) <- c("ID", "year", "month", "tp")
+    }
+    
+    datalist <- list()
+    datalist <- merge.rs(re.list, re.list2, station)
+    
+    name <- unique(station$ID) # levels(factor()) -> 자동으로 오름차순으로 정렬
+    # name의 id 순서와 t.result의 행순서가 일치하는지 항상 확인
+    
+    #tmp <- avgvar(datalist, 1981, 2020) 
+    
+    t.anl <- temp_anl(name, datalist, 1981, 2020)
+    
+    colnames(t.anl) <- c("station", "variable", "method", "coefficient", "p","df") 
+    
+    #
+    
+    coord.cor <- merge(t.anl, meta, by = "station", all = T) 
+    
+    coord.cor$coefficient <- as.numeric(coord.cor$coefficient)
+    coord.cor$p <- as.numeric(coord.cor$p)
+    
+    method <- as.factor(coord.cor$method)
+    variable <- strsplit(coord.cor$variable, "[.]")
+    
+    ssn <- vector()
+    var <- vector()
+    
+    for (i in 1:length(variable)){
+      ssn[i] <- variable[[i]][2]
+      var[i] <- variable[[i]][1]
+    }
+    
+    coord.cor$season <- ssn
+    coord.cor$var <- var
+    
+    coord.cor$season <- factor(coord.cor$season, levels = c("DJF", "MAM", "JJA", 
+                                                            "SON", "ANN", "MON"))
+    coord.cor$method <- factor(coord.cor$method, 
+                               levels = c("pearson", "spearman", "kendall", 
+                                          'bias', 'rmse'))
+    
+    coord.cor <- transform(coord.cor, 
+                           "significance" = ifelse(p < 0.01, "sig", "not sig"))
+    
+    coord.cor$significance <- factor(coord.cor$significance, 
+                                     levels = c("sig", "not sig"))
+    
+    write.csv(coord.cor, paste0("H:\\Toolkit\\Mirror\\Comparison\\", 
+                                dir.list[k], "\\all_analysis_v4_station.csv"))
+    
+    print(paste0(k, "th task has done"))
+  }
+}
+
+#
+meta_source <- c("\\\\climatelab\\data\\ASOS\\meta_revised.csv",
+               "\\\\climatelab\\data\\Northkorea_GTS\\metadata_NKO_station.csv",
+               "\\\\climatelab\\data\\JMA\\meta_lonlatel.csv", 
+               "\\\\climatelab\\data\\CMA\\meta_cma.csv")
+
+meta.list <- list()
+num <- c('station', 'ID', 'id', 'id')
+
+for (i in 1:4){
+  meta.list[[i]] <- read.csv(meta_source[i])
+  meta.list[[i]] <- meta.list[[i]][,c(num[i], 'lon', 'lat')]
+  colnames(meta.list[[i]]) <- c('station', 'lon', 'lat')
+}
+#
+
+# asos data ---------------------------------------------------------------
+dir.list <- c("eras_asos", "jra_asos", "ncep_asos", "cru_asos")
+d.list <- c("ERA-5", 'JRA-55', 'NCEP2', 'CRU_TS')
+
+t.result <- list()
+p.result <- list()
+
+station <- 
+  read.csv("H:\\Toolkit\\Mirror\\Comparison\\Station\\all_month_asos.csv")
+#meta <- read.csv("\\\\climatelab\\data\\ASOS\\meta_revised.csv", header = TRUE)
+
+meta <- meta.list[[1]]
+
+for (i in 1:4){
+  t.result[[i]] <- read.csv(paste0("H:\\Toolkit\\Mirror\\Comparison\\", 
+                                   dir.list[i], "\\", d.list[i], 
+                                   "_monthly mean(made)_station_c.csv"))
+  p.result[[i]] <- read.csv(paste0("H:\\Toolkit\\Mirror\\Comparison\\", 
+                                   dir.list[i], "\\", d.list[i], 
+                                   "_monthly tp(made)_station_mm.csv"))
+  t.result[[i]] <- t.result[[i]][,-1]
+  p.result[[i]] <- p.result[[i]][,-1]
+  colnames(t.result[[i]]) <- c(meta$station, "date", "year", "month")
+  colnames(p.result[[i]]) <- c(meta$station, "date", "year", "month")
+}
+
+station <- station[,c('station','avg_temp','avg_prep','year','month')]
+colnames(station) <- c("ID", "AVG_TEMP", "MON_PRE", "year", "month")
+
+all_analysis(meta)
+
+# amedas data ---------------------------------------------------------------
+
+#
+dir.list <- c("eras_amedas", "jra_amedas", "ncep_amedas", "cru_amedas")
+
+t.result <- list()
+p.result <- list()
+#
+
+for (i in 1:4){
+  t.result[[i]] <- read.csv(paste0("H:\\Toolkit\\Mirror\\Comparison\\",
+                                   "AMeDAS_Reanalysis_Data\\", d.list[i], 
+                                   "_temperature.csv"))
+  p.result[[i]] <- read.csv(paste0("H:\\Toolkit\\Mirror\\Comparison\\",
+                                   "AMeDAS_Reanalysis_Data\\", d.list[i], 
+                                   "_precipitation.csv"))
+  t.result[[i]] <- t.result[[i]][,-1]
+  p.result[[i]] <- p.result[[i]][,-1]
+  l <- 143
+  colnames(t.result[[i]])[1:l] <- 
+    as.numeric(substr(colnames(t.result[[i]])[1:l], 2, 6))
+  colnames(p.result[[i]])[1:l] <- 
+    as.numeric(substr(colnames(p.result[[i]])[1:l], 2, 6))
+}
+
+missing <- c(44226, 88971, 91107, 91146, 49251) 
+#CRU에서 나타나지 않는 섬 4개와 월 강수기록이 없는 후지산
+
+meta <- meta.list[[3]]
+
+for(i in 1:4){
+  t.result[[i]] <- t.result[[i]][,-(which(meta$station %in% missing))]
+  p.result[[i]] <- p.result[[i]][,-(which(meta$station %in% missing))]
+}
+
+#
+station <- read.csv(paste0("H:\\Toolkit\\Mirror\\Comparison\\Station\\",
+                           "all_month_amedas.csv"))
+
+station <- station[,c('id','avg_temp','avg_pre','year','month')]
+colnames(station) <- c("ID", "AVG_TEMP", "MON_PRE", "year", "month")
+station <- subset(station, !station$ID %in% missing)
+
+meta <- subset(meta, !meta$station %in% missing) # 138개
+
+all_analysis(meta)
+
+# GTS(NK) data ---------------------------------------------------------------
+
+#
+dir.list <- c("eras_gts", "jra_gts", "ncep_gts", "cru_gts")
+
+#
+station <- read.csv("\\\\climatelab\\lab meeting documents\\북한\\NK\\r_result\\all_month_gts.csv")
+meta <- meta.list[[2]]
+
+rcn <- c(meta$station, "date", "year", "month")
+for (i in 1:4){
+  t.result[[i]] <- read.csv(paste0("H:\\Toolkit\\Mirror\\Comparison\\",
+                                   "GTS_Reanalysis_Data\\", d.list[i], 
+                                   "_temperature.csv"))
+  p.result[[i]] <- read.csv(paste0("H:\\Toolkit\\Mirror\\Comparison\\",
+                                   "GTS_Reanalysis_Data\\", d.list[i], 
+                                   "_precipitation.csv"))
+  t.result[[i]] <- t.result[[i]][,-1]
+  p.result[[i]] <- p.result[[i]][,-1]
+  colnames(t.result[[i]]) <- rcn
+  colnames(p.result[[i]]) <- rcn
+}
+
+#
+station <- station[,c(2,5,8,3,4)]
+colnames(station) <- c("ID", "AVG_TEMP", "MON_PRE", "year", "month")
+
+all_analysis(meta)
+
+# cma data ---------------------------------------------------------------
+
+dir.list <- c("eras_cma", "jra_cma", "ncep_cma", "cru_cma")
+
+meta <- meta.list[[4]]
+
+rcn <- c(meta$station, "date", "year", "month")
+
+for (i in 1:4){
+  t.result[[i]] <- read.csv(paste0(
+    "H:\\Toolkit\\Mirror\\Comparison\\CMA_Reanalysis_Data\\", d.list[i], 
+    "_temperature.csv"))
+  p.result[[i]] <- read.csv(paste0(
+    "H:\\Toolkit\\Mirror\\Comparison\\CMA_Reanalysis_Data\\", d.list[i], 
+    "_precipitation.csv"))
+  
+  names(t.result[[i]])[2:518] <- as.numeric(substr(names(t.result[[i]])[2:518], 2, 6))
+  names(p.result[[i]])[2:518] <- as.numeric(substr(names(p.result[[i]])[2:518], 2, 6))
+  
+  if (i == 4){
+    oob <- vector()
+    for (k in 1:length(t.result[[4]])){
+      if (is.na(t.result[[4]][1,k])){
+        oob <- c(oob, names(t.result[[4]][k]))
+        print(k) #131, 132, 511번째 행 
+      }}}
+}
+
+for (i in 1:4){
+  t.result[[i]] <- t.result[[i]][,c(-1,-132,-133,-512)]
+  p.result[[i]] <- p.result[[i]][,c(-1,-132,-133,-512)]
+}
+
+station <- read.csv("\\\\climatelab\\data\\CMA\\all_month_cma.csv")
+station <- station[,c('ID','AVG_TEMP','AVG_PRE','year','month')]
+colnames(station)[3] <- "MON_PRE"
+station <- subset(station, !station$ID %in% oob)
+
+meta <- subset(meta, !meta$station %in% oob) #514개 
+
+all_analysis(meta)
+
+
+#
+d.list <- c("ERA-5", "JRA-55", "NCEP2", "CRU_TS")
+con <- c("asos", "gts", "amedas", "cma")
+
+alldata <- data.frame()
+
+for (i in 1:4){
+  dir.list <- c(paste0("eras_", con[i]), 
+                paste0("jra_", con[i]), 
+                paste0("ncep_", con[i]), 
+                paste0("cru_", con[i]))
+  for(k in 1:4){
+    coord.cor <- read.csv(paste0("H:\\Toolkit\\Mirror\\Comparison\\", 
+                                 dir.list[k] ,"\\all_analysis_v4_station.csv"))
+    coord.cor <- coord.cor[, c("station", "variable", "method", "coefficient", 
+                               "p", "df", "lon", "lat", "season", "var", 
+                               "significance")]
+    coord.cor <- transform(coord.cor, significance = ifelse(p < 0.01, 1, 0))
+    #coord.cor <- transform(coord.cor, insig = ifelse(p < 0.01, NA, 1))
+    #write.csv(coord.cor, paste0("H:\\Toolkit\\Mirror\\Comparison\\", 
+                                #dir.list[k] ,"\\all_cortest_station.csv"))
+    coord.cor <- transform(coord.cor, data = d.list[k])
+    coord.cor <- transform(coord.cor, country = con[i])
+    coord.cor <- subset(coord.cor, coord.cor$season != 'MON')
+    alldata <- rbind(alldata, coord.cor)
+  }
+  print(i)
+}
+
+#
+alldata[,'season'] <- factor(alldata[,'season'], 
+                             levels = c("ANN", "DJF", "MAM", "JJA", "SON"))
+alldata[,'method'] <- factor(alldata[,'method'], 
+                             levels = c("pearson", "spearman", "kendall",
+                                        "rmse", "bias"))
+alldata[,'significance'] <- factor(alldata[,'significance'], 
+                                   levels = c(1, 0))
+alldata[,'data'] <- factor(alldata[,'data'], 
+                           levels = c("ERA-5", "JRA-55", "NCEP2", "CRU_TS"))
+alldata[,'var'] <- factor(alldata[,'var'], levels = c('avg_temp', 'pre'))
+
+alldata_easm <- subset(alldata, lon <= 146 & lon >= 110 & lat <= 55 & lat >= 20)
+
+write.csv(alldata_easm, 
+          "H:\\Toolkit\\Mirror\\Comparison\\EAM\\eam_analysis.csv")
+
+eam_analysis <- read.csv("H:\\Toolkit\\Mirror\\Comparison\\EAM\\v1\\eam_analysis.csv")
+eam_analysis$data <- gsub("ERA-5", "ERA5", eam_analysis$data)
+eam_analysis$data <- gsub("JRA-55", "JRA55", eam_analysis$data)
+eam_analysis$data <- gsub("CRU_TS", "CRU", eam_analysis$data)
+
+eam_pearson <- eam_analysis[which(eam_analysis$method == 'pearson'),]
+eam_spearman <- eam_analysis[which(eam_analysis$method == 'spearman'),]
+eam_kendall <- eam_analysis[which(eam_analysis$method == 'kendall'),]
+eam_rmse <- eam_analysis[which(eam_analysis$method == 'rmse'),]
+eam_bias <- eam_analysis[which(eam_analysis$method == 'bias'),]
+
+write.csv(eam_pearson, "H:\\Toolkit\\Mirror\\Comparison\\EAM\\v3\\eam_pearson.csv")
+write.csv(eam_spearman, "H:\\Toolkit\\Mirror\\Comparison\\EAM\\v3\\eam_spearman.csv")
+write.csv(eam_kendall, "H:\\Toolkit\\Mirror\\Comparison\\EAM\\v3\\eam_kendall.csv")
+write.csv(eam_rmse, "H:\\Toolkit\\Mirror\\Comparison\\EAM\\v3\\eam_rmse.csv")
+write.csv(eam_bias, "H:\\Toolkit\\Mirror\\Comparison\\EAM\\v3\\eam_bias.csv")
+
+```
+
+## Scatter Plots
+
+```{r scatter}
+
+```
+
+## Best maps
+
+```{r best}
+
+dir <- "H:\\Toolkit\\Mirror\\Comparison\\"
+
+d.list <- c("ERA5", "JRA55", "NCEP2", "CRU")
+con <- c("asos", "gts", "amedas", "cma")
+
+alldata <- data.frame()
+all.list <- list()
+opt <- data.frame(matrix(ncol = 13))
+
+for (j in 1:4){ #국가별
+  dir.list <- c(paste0("eras_", con[j]), 
+                paste0("jra_", con[j]), 
+                paste0("ncep_", con[j]))
+  for(k in 1:3){ #데이터별
+    coord.cor <- read.csv(paste0(dir,dir.list[k],"\\all_analysis_v4_station.csv"))
+    coord.cor <- subset(coord.cor, coord.cor$season != 'MON')
+    coord.cor <- subset(coord.cor, lon <= 146 & lon >= 110 & lat <= 55 & lat >= 20)
+    coord.cor <- coord.cor[, c("station", "variable", "method", "coefficient", 
+                               "p", "df", "lon", "lat", "season", "var", 
+                               "significance")]
+    coord.cor <- transform(coord.cor, significance = ifelse(p < 0.01, 1, 0))
+    coord.cor <- transform(coord.cor, data = d.list[k])
+    coord.cor <- transform(coord.cor, country = con[j])
+    
+    for (i in 1:nrow(coord.cor)){
+      if (k == 1){
+        all.list[[i]] <- coord.cor[i,]
+      }else{
+        all.list[[i]][k,] <- coord.cor[i,]
+      }
+    }
+    colnames(opt) <- colnames(coord.cor)
+    for (i in 1:nrow(coord.cor)){
+      if (all.list[[i]]$method[1] %in% c("pearson", "spearman", "kendall")){
+        opt[i,] <- all.list[[i]][which.max(all.list[[i]][,'coefficient']),]
+      }else if (all.list[[i]]$method[1] == "rmse"){
+        opt[i,] <- all.list[[i]][which.min(all.list[[i]][,'coefficient']),]
+      }else if (all.list[[i]]$method[1] == "bias"){
+        opt[i,] <- all.list[[i]][which.min(abs(all.list[[i]][,'coefficient'])),]
+      }
+    }
+  }
+  alldata <- rbind(alldata, opt)
+  print(j)
+}
+
+write.csv(alldata, 
+          paste0("H:\\Toolkit\\Mirror\\Comparison\\opt_map\\BestAnalysisByStationV2.csv"))
+```
+
+```{r}
+
+eam <- read.csv("H:\\Toolkit\\Mirror\\Comparison\\EAM\\v1\\eam_analysis.csv")
+
+eam$data <- gsub("ERA-5", "ERA5", eam$data)
+eam$data <- gsub("JRA-55", "JRA55", eam$data)
+eam$data <- gsub("CRU_TS", "CRU", eam$data)
+eam$method <-gsub("pearson", "Pearson", eam$method)
+eam$method <-gsub("rmse", "RMSE", eam$method)
+eam$method <-gsub("bias", "Bias", eam$method)
+
+#54157 중복
+eam[which(eam$station == 54157 & eam$country == 'cma'),'station'] <- 54158
+eam[which(eam$station == 54157 & eam$country == 'amedas'),'station'] 
+
+#eam <- subset(eam, eam$data != "CRU_TS")
+#eam <- st_as_sf(eam, coords = c('lon', 'lat'))
+eam <- split(eam, list(eam$variable, eam$station, eam$method))
+
+opt <- data.frame(matrix(ncol = 14))
+colnames(opt) <- colnames(eam[[1]])
+for (i in 1:length(eam)){
+  if (eam[[i]]$method[1] %in% c("Pearson", "spearman", "kendall")){
+    opt[i,] <- eam[[i]][which.max(eam[[i]][,'coefficient']),]
+    }else if (eam[[i]]$method[1] == "RMSE"){
+      opt[i,] <- eam[[i]][which.min(eam[[i]][,'coefficient']),]
+    }else if (eam[[i]]$method[1] == "Bias"){
+        opt[i,] <- eam[[i]][which.min(abs(eam[[i]][,'coefficient'])),]
+    }}
+
+write.csv(opt, "C:\\Users\\Minseok\\projects\\Comparison\\Revision\\eam_best_inc_CRU.csv")
+```
+
+## Taylor Diagrams
+
+```{r taylor}
+
+```
